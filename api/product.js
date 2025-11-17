@@ -3,12 +3,39 @@ import path from 'path';
 
 export default async function handler(req, res) {
   try {
-    const filePath = path.join(process.cwd(), 'src', 'data', 'db.json');
-    const jsonData = await fs.readFile(filePath, 'utf-8');
-    const data = JSON.parse(jsonData);
+    // Try multiple possible paths
+    const possiblePaths = [
+      path.join(process.cwd(), 'src', 'data', 'db.json'),
+      path.join(process.cwd(), 'data', 'db.json'),
+      path.join(process.cwd(), 'public', 'data', 'db.json'),
+      './src/data/db.json',
+      './data/db.json'
+    ];
 
-    res.status(200).json(data.products); // Adjust to your structure
+    let data = null;
+    let lastError = null;
+
+    for (const filePath of possiblePaths) {
+      try {
+        const jsonData = await fs.readFile(filePath, 'utf-8');
+        data = JSON.parse(jsonData);
+        break; // Success! Exit loop
+      } catch (err) {
+        lastError = err;
+        continue; // Try next path
+      }
+    }
+
+    if (!data) {
+      throw lastError || new Error('File not found in any location');
+    }
+
+    res.status(200).json(data.products);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to load data' });
+    res.status(500).json({ 
+      error: 'Failed to load data',
+      details: error.message,
+      cwd: process.cwd()
+    });
   }
 }

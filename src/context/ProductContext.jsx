@@ -11,6 +11,7 @@ export function ProductProvider({ children }) {
     const fetchProdutcts = async () => {
       try {
         const res = await fetch('/api/products');
+        console.log(res);
         if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
         setProducts(data);
